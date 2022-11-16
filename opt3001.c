@@ -72,12 +72,12 @@ double opt3001_get_data(I2C_Handle *i2c) {
     // JTKJ: Tehtävä 2. Muokkaa funktiota niin että se palauttaa mittausarvon lukseina
     // JTKJ: Exercise 2. Complete this function to return the measured value as lux
     uint16_t lightness = 0;
-	double lux = -1.0; // return value of the function
+    double lux = -1.0; // return value of the function
     // JTKJ: Find out the correct buffer sizes (n) with this sensor?
     uint8_t txBuffer[1];
     uint8_t rxBuffer[2];
 
-	// JTKJ: Fill in the i2cMessage data structure with correct values
+    // JTKJ: Fill in the i2cMessage data structure with correct values
     //       as shown in the lecture material
     I2C_Transaction i2cMessage;
 
@@ -88,30 +88,30 @@ double opt3001_get_data(I2C_Handle *i2c) {
     i2cMessage.readBuf = rxBuffer;  // Vastaanottopuskurin asetus
     i2cMessage.readCount = 2;       // Vastaanotetaan 2 tavua
 
-	if (opt3001_get_status(i2c) & OPT3001_DATA_READY) {
+    if (opt3001_get_status(i2c) & OPT3001_DATA_READY) {
 
-		if (I2C_transfer(*i2c, &i2cMessage)) {
+        if (I2C_transfer(*i2c, &i2cMessage)) {
 
-	        // JTKJ: Here the conversion from register value to lux
-		    lightness = (rxBuffer[0] << 8) | rxBuffer[1];
-		    uint16_t MASK_E = 0xF000;
-		    uint16_t MASK_R = 0xFFF;
-		    uint16_t E_masked = MASK_E & lightness;
-		    uint16_t E = E_masked >> 12;
-		    int R = MASK_R & lightness;
-		    int power = pow(2, E);
-		    lux = 0.01 * power * R;
+            // JTKJ: Here the conversion from register value to lux
+            lightness = (rxBuffer[0] << 8) | rxBuffer[1];
+            uint16_t MASK_E = 0xF000;
+            uint16_t MASK_R = 0xFFF;
+            uint16_t E_masked = MASK_E & lightness;
+            uint16_t E = E_masked >> 12;
+            int R = MASK_R & lightness;
+            int power = pow(2, E);
+            lux = 0.01 * power * R;
 
-		} else {
+        } else {
 
-			System_printf("OPT3001: Data read failed!\n");
-			System_flush();
-		}
+            System_printf("OPT3001: Data read failed!\n");
+            System_flush();
+        }
 
-	} else {
-		System_printf("OPT3001: Data not ready!\n");
-		System_flush();
-	}
+    } else {
+        System_printf("OPT3001: Data not ready!\n");
+        System_flush();
+    }
 
-	return lux;
+    return lux;
 }

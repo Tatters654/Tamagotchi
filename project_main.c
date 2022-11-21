@@ -28,7 +28,9 @@ Char uartTaskStack[STACKSIZE];
 
 // JTKJ: Tehtävä 3. Tilakoneen esittely
 // JTKJ: Exercise 3. Definition of the state machine
-enum state { WAITING=1, DATA_READY };
+enum state {
+    WAITING = 1, DATA_READY
+};
 enum state programState = WAITING;
 
 // JTKJ: Tehtävä 3. Valoisuuden globaali muuttuja
@@ -43,22 +45,21 @@ static PIN_Handle ledHandle;
 static PIN_State ledState;
 
 PIN_Config buttonConfig[] = {
-   Board_BUTTON0  | PIN_INPUT_EN | PIN_PULLUP | PIN_IRQ_NEGEDGE,
-   PIN_TERMINATE // Asetustaulukko lopetetaan aina tällä vakiolla
+        Board_BUTTON0 | PIN_INPUT_EN | PIN_PULLUP | PIN_IRQ_NEGEDGE,
+        PIN_TERMINATE // Asetustaulukko lopetetaan aina tällä vakiolla
 };
 PIN_Config ledConfig[] = {
-   Board_LED1 | PIN_GPIO_OUTPUT_EN | PIN_GPIO_LOW | PIN_PUSHPULL | PIN_DRVSTR_MAX,
-   PIN_TERMINATE // Asetustaulukko lopetetaan aina tällä vakiolla
+        Board_LED1 | PIN_GPIO_OUTPUT_EN | PIN_GPIO_LOW | PIN_PUSHPULL | PIN_DRVSTR_MAX,
+        PIN_TERMINATE // Asetustaulukko lopetetaan aina tällä vakiolla
 };
 
 void buttonFxn(PIN_Handle handle, PIN_Id pinId) {
-
     // JTKJ: Tehtävä 1. Vilkuta jompaa kumpaa lediä
     // JTKJ: Exercise 1. Blink either led of the device
     // Vaihdetaan led-pinnin tilaa negaatiolla
-    uint_t pinValue = PIN_getOutputValue( Board_LED1 );
+    uint_t pinValue = PIN_getOutputValue(Board_LED1);
     pinValue = !pinValue;
-    PIN_setOutputValue( ledHandle, Board_LED1, pinValue );
+    PIN_setOutputValue(ledHandle, Board_LED1, pinValue);
 
 }
 
@@ -75,7 +76,7 @@ Void uartTaskFxn(UArg arg0, UArg arg1) {
     uartParams.writeDataMode = UART_DATA_TEXT;
     uartParams.readDataMode = UART_DATA_TEXT;
     uartParams.readEcho = UART_ECHO_OFF;
-    uartParams.readMode=UART_MODE_BLOCKING;
+    uartParams.readMode = UART_MODE_BLOCKING;
     uartParams.baudRate = 9600; // nopeus 9600baud
     uartParams.dataLength = UART_LEN_8; // 8
     uartParams.parityType = UART_PAR_NONE; // n
@@ -84,15 +85,14 @@ Void uartTaskFxn(UArg arg0, UArg arg1) {
     //Open UART Connection (exercise 4)
     uart = UART_open(Board_UART0, &uartParams);
     if (uart == NULL) {
-       System_abort("Error opening the UART");
+        System_abort("Error opening the UART");
     }
     while (1) {
-
         // JTKJ: Tehtävä 3. Kun tila on oikea, tulosta sensoridata merkkijonossa debug-ikkunaan
         //       Muista tilamuutos
         // JTKJ: Exercise 3. Print out sensor data as string to debug window if the state is correct
         //       Remember to modify state
-        if(programState == DATA_READY){
+        if (programState == DATA_READY) {
             printf("uartTask: %f Lux\n", ambientLight);
             // JTKJ: Tehtävä 4. Lähetä sama merkkijono UARTilla
             // JTKJ: Exercise 4. Send the same sensor data string with UART
@@ -100,12 +100,9 @@ Void uartTaskFxn(UArg arg0, UArg arg1) {
             UART_write(uart, uart_ambientLight, strlen(uart_ambientLight));
             programState = WAITING;
         }
-
-
         // Just for sanity check for exercise, you can comment this out
         //System_printf("uartTask\n");
         //System_flush();
-
         // Once per 100ms, you can modify this
         Task_sleep(100000 / Clock_tickPeriod);
     }
@@ -113,17 +110,16 @@ Void uartTaskFxn(UArg arg0, UArg arg1) {
 
 Void sensorTaskFxn(UArg arg0, UArg arg1) {
 
-    I2C_Handle      i2c;
-    I2C_Params      i2cParams;
+    I2C_Handle i2c;
+    I2C_Params i2cParams;
     I2C_Params_init(&i2cParams);
     i2cParams.bitRate = I2C_400kHz;
     // JTKJ: Tehtävä 2. Avaa i2c-väylä taskin käyttöön
     // JTKJ: Exercise 2. Open the i2c bus
     i2c = I2C_open(Board_I2C_TMP, &i2cParams);
     if (i2c == NULL) {
-       System_abort("Error Initializing I2C\n");
+        System_abort("Error Initializing I2C\n");
     }
-
     // JTKJ: Tehtävä 2. Alusta sensorin OPT3001 setup-funktiolla
     //       Laita enne funktiokutsua eteen 100ms viive (Task_sleep)
     // JTKJ: Exercise 2. Setup the OPT3001 sensor for use
@@ -132,7 +128,6 @@ Void sensorTaskFxn(UArg arg0, UArg arg1) {
     opt3001_setup(&i2c);
 
     while (1) {
-
         // JTKJ: Tehtävä 2. Lue sensorilta dataa ja tulosta se Debug-ikkunaan merkkijonona
         // JTKJ: Exercise 2. Read sensor data and print it to the Debug window as string
         ambientLight = opt3001_get_data(&i2c);                          //Valoisuus tallennettu globaaliin muuttujaan
@@ -174,24 +169,24 @@ int main(void) {
     //       Remember to register the above interrupt handler for button
     // Otetaan pinnit käyttöön ohjelmassa
     buttonHandle = PIN_open(&buttonState, buttonConfig);
-    if(!buttonHandle) {
-       System_abort("Error initializing button pins\n");
+    if (!buttonHandle) {
+        System_abort("Error initializing button pins\n");
     }
     ledHandle = PIN_open(&ledState, ledConfig);
-    if(!ledHandle) {
-       System_abort("Error initializing LED pins\n");
+    if (!ledHandle) {
+        System_abort("Error initializing LED pins\n");
     }
 
     // Asetetaan painonappi-pinnille keskeytyksen käsittelijäksi
     // funktio buttonFxn
     if (PIN_registerIntCb(buttonHandle, &buttonFxn) != 0) {
-       System_abort("Error registering button callback function");
+        System_abort("Error registering button callback function");
     }
     /* Task */
     Task_Params_init(&sensorTaskParams);
     sensorTaskParams.stackSize = STACKSIZE;
     sensorTaskParams.stack = &sensorTaskStack;
-    sensorTaskParams.priority=2;
+    sensorTaskParams.priority = 2;
     sensorTaskHandle = Task_create(sensorTaskFxn, &sensorTaskParams, NULL);
     if (sensorTaskHandle == NULL) {
         System_abort("Task create failed!");
@@ -200,7 +195,7 @@ int main(void) {
     Task_Params_init(&uartTaskParams);
     uartTaskParams.stackSize = STACKSIZE;
     uartTaskParams.stack = &uartTaskStack;
-    uartTaskParams.priority=2;
+    uartTaskParams.priority = 2;
     uartTaskHandle = Task_create(uartTaskFxn, &uartTaskParams, NULL);
     if (uartTaskHandle == NULL) {
         System_abort("Task create failed!");

@@ -100,7 +100,7 @@ void buttonFxn1(PIN_Handle handle, PIN_Id pinId)
 void ledBlink(int color)
 {
     // Blinks LEDs. Give the function value 1 or 2 depending on which led you want to blink
-    //  0 = Green and 1 = RED TODO:Check if this is correct or no
+    //  0 = Green and 1 = RED
     if (color == 0)
     {
         PIN_setOutputValue(ledHandle0, Board_LED0, 1);
@@ -322,7 +322,7 @@ Void uartTaskFxn(UArg arg0, UArg arg1)
 int main(void)
 {
     /*
-     * TODO: Muuten toimii paitsi uart viestin vastaanotto j‰‰dytt‰‰ softan
+     * TODO: Extras + Exercise fxn
      */
     // Task variables
     Task_Handle uartTaskHandle;
@@ -346,7 +346,6 @@ int main(void)
     {
         System_abort("Error initializing MPU pins\n");
     }
-    //TODO: Buttonhandle1, toimiiko se oletetusti vaiko miten?
     buttonHandle0 = PIN_open(&buttonState0, buttonConfig0);
     if (!buttonHandle0)
     {

@@ -45,6 +45,7 @@ short uartPet = 0;
 short uartEat = 0;
 short uartExercise = 0;
 char uartInput;
+char uartBuffer[30];
 // Add pins RTOS-variables and configuration here
 static PIN_Handle buttonHandle0;
 static PIN_State buttonState0;
@@ -99,18 +100,18 @@ void buttonFxn1(PIN_Handle handle, PIN_Id pinId)
 void ledBlink(int color)
 {
     // Blinks LEDs. Give the function value 1 or 2 depending on which led you want to blink
-    //  1 = Green and 2 = RED TODO:Check if this is correct or no
+    //  0 = Green and 1 = RED TODO:Check if this is correct or no
     if (color == 0)
     {
-        PIN_setOutputValue(ledHandle0, Board_LED0, 1)
-            Task_sleep(50000 / Clock_tickPeriod);
-        PIN_setOutputValue(ledHandle0, Board_LED0, 0)
+        PIN_setOutputValue(ledHandle0, Board_LED0, 1);
+        Task_sleep(50000 / Clock_tickPeriod);
+        PIN_setOutputValue(ledHandle0, Board_LED0, 0);
     }
     if (color == 1)
     {
-        PIN_setOutputValue(ledHandle1, Board_LED1, 1)
-            Task_sleep(50000 / Clock_tickPeriod);
-        PIN_setOutputValue(ledHandle1, Board_LED1, 0)
+        PIN_setOutputValue(ledHandle1, Board_LED1, 1);
+        Task_sleep(50000 / Clock_tickPeriod);
+        PIN_setOutputValue(ledHandle1, Board_LED1, 0);
     }
 }
 void buzzerBuzz()
@@ -166,32 +167,35 @@ Void mpuFxn(UArg arg0, UArg arg1)
             counter++;
             if (counter > 10)
             {
-                uartExercise = 3;
-                programState == MSG_READY;
+                uartExercise += 3;
+                programState = MSG_READY;
                 counter = 0;
             }
             // Close MPU I2C
             I2C_close(i2cMPU);
         }
         // Sleep 100ms
-        Task_sleep(100000 / Clock_tickPeriod);
+        Task_sleep(1000000 / Clock_tickPeriod);
     }
 }
 
 static void uartFxn(UART_Handle uart, void *rxBuffer, size_t len)
 {
-    // TODO:
+    // TODO: Adjust if needed
     // Handler function for incoming UART messages
+    strcpy(uartBuffer, uartInput);
+    printf("uartBuffer: %c", uartBuffer);
     programState = RECV_MSG;
+    UART_read(uart, rxBuffer, 1);
 }
 
 /* Task Functions */
 Void uartTaskFxn(UArg arg0, UArg arg1)
 {
-    // Exercise 4
     UART_Handle uart;
     UART_Params uartParams;
     char uartMsg[30];
+    //Make sure TAG_ID matches the ID legged in on web application
     char TAG_ID[] = "1111";
     char NO_EAT[] = "Calm down";
     char NO_EXERCISE[] = "Too fitness";
@@ -219,126 +223,97 @@ Void uartTaskFxn(UArg arg0, UArg arg1)
     {
         System_abort("Error opening the UART");
     }
+    UART_read(uart, &uartInput, 1);
     while (1)
     {
-        // Print out sensor data as string to debug window if the state is correct
-        // Remember to modify state
-        /*TODO:
-         * Open/Close uart connection accordingly
-         */
+        //UART Read/Write loop
+        if (programState == RECV_MSG)
+        {
+            //Disable button interruptions
+            PIN_setInterrupt(buttonConfig0, PIN_ID(Board_KEY_LEFT) | PIN_IRQ_DIS);
+            PIN_setInterrupt(buttonConfig1, PIN_ID(Board_KEY_RIGHT) | PIN_IRQ_DIS);
+            // Read the input data and beep+blink led accordingly
+            if (strstr(uartBuffer, TAG_ID) != NULL)
+            {
+                if (strstr(uartBuffer, NO_EAT) != NULL)
+                {
+                    ledBlink(0);
+                    buzzerBuzz();
+                }
+                if (strstr(uartBuffer, NO_EXERCISE) != NULL)
+                {
+                    ledBlink(0);
+                    buzzerBuzz();
+                    buzzerBuzz();
+                    buzzerBuzz();
+                }
+                if (strstr(uartBuffer, NO_PET) != NULL)
+                {
+                    ledBlink(0);
+                    buzzerBuzz();
+                    buzzerBuzz();
+                }
+                if (strstr(uartBuffer, NEED_EAT) != NULL)
+                {
+                    ledBlink(1);
+                    buzzerBuzz();
+                    buzzerBuzz();
+                    buzzerBuzz();
+                }
+                if (strstr(uartBuffer, NEED_EXERCISE) != NULL)
+                {
+                    ledBlink(1);
+                    buzzerBuzz();
+                    buzzerBuzz();
+                    buzzerBuzz();
+                }
+                if (strstr(uartBuffer, NEED_PET) != NULL)
+                {
+                    ledBlink(1);
+                    buzzerBuzz();
+                    buzzerBuzz();
+                    buzzerBuzz();
+                }
+                if (strstr(uartBuffer, PET_GONE) != NULL)
+                {
+
+                    ledBlink(1);
+                    ledBlink(1);
+                    ledBlink(1);
+                    ledBlink(1);
+                    ledBlink(1);
+                    ledBlink(1);
+
+                }
+            }
+            uartBuffer[0] = '\0';
+            programState = WAITING;
+            //Allow button interruptions
+            PIN_setInterrupt(buttonConfig0, PIN_ID(Board_KEY_LEFT) | PIN_IRQ_POSEDGE);
+            PIN_setInterrupt(buttonConfig1, PIN_ID(Board_KEY_RIGHT) | PIN_IRQ_POSEDGE);
+        }
         if (programState == MSG_READY)
         {
             // Send sensor data string with UART
             sprintf(uartMsg, "id:1111,EAT:%d,PET:%d,EXERCISE:%d\0", uartEat, uartPet, uartExercise);
             UART_write(uart, uartMsg, strlen(uartMsg));
-            uartEat, uartPet, uartExercise = 0;
+            uartEat = 0;
+            uartPet = 0;
+            uartExercise = 0;
             programState = WAITING;
         }
-        // TODO: Add condition to read uart
-        if (programState == RECV_MSG)
-        {
-            // Read the input data and beep+blink led accordingly
-            UART_read(uart, &uartInput, 1);
-            if (strstr(uart, TAG_ID) != NULL)
-            {
-                if (strstr(uart, NO_EAT) != NULL)
-                {
-                    ledBlink(0);
-                    buzzerBuzz();
-                }
-                if (strstr(uart, NO_EXERCISE) != NULL)
-                {
-                    ledBlink(0);
-                    buzzerBuzz();
-                    buzzerBuzz();
-                    buzzerBuzz();
-                }
-                if (strstr(uart, NO_PET) != NULL)
-                {
-                    ledBlink(0);
-                    buzzerBuzz();
-                    buzzerBuzz();
-                }
-                if (strstr(uart, NEED_EAT) != NULL)
-                {
-                    ledBlink(1);
-                    buzzerBuzz();
-                    buzzerBuzz();
-                    buzzerBuzz();
-                }
-                if (strstr(uart, NEED_EXERCISE) != NULL)
-                {
-                    ledBlink(1);
-                    buzzerBuzz();
-                    buzzerBuzz();
-                    buzzerBuzz();
-                }
-                if (strstr(uart, NEED_PET) != NULL)
-                {
-                    ledBlink(1);
-                    buzzerBuzz();
-                    buzzerBuzz();
-                    buzzerBuzz();
-                }
-                if (strstr(uart, PET_GONE) != NULL)
-                {
-                    for (int i = 0; i < 6; i++)
-                    {
-                        ledBlink(1);
-                    }
-                }
-            }
-            programState = WAITING;
-        }
-    }
-    // Once per 100ms, you can modify this
-    Task_sleep(100000 / Clock_tickPeriod);
-}
-
-Void sensorTaskFxn(UArg arg0, UArg arg1)
-{
-
-    I2C_Handle i2c;
-    I2C_Params i2cParams;
-    I2C_Params_init(&i2cParams);
-    i2cParams.bitRate = I2C_400kHz;
-
-    // Open the i2c bus
-    i2c = I2C_open(Board_I2C_TMP, &i2cParams);
-    if (i2c == NULL)
-    {
-        System_abort("Error Initializing I2C\n");
+        // Once per 100ms, you can modify this
+        Task_sleep(100000 / Clock_tickPeriod);
     }
 
-    // Setup the OPT3001 sensor for use
-    // Before calling the setup function, insert 100ms delay with Task_sleep
-    Task_sleep(100000);
-    opt3001_setup(&i2c);
-
-    while (1)
-    {
-        // Read sensor data and print it to the Debug window as string
-        ambientLight = opt3001_get_data(&i2c); // Valoisuus tallennettu globaaliin muuttujaan
-        printf("sensorTask: %.4f Lux\n", ambientLight);
-
-        // Modify state
-        programState = MSG_READY;
-        // Once per second, you can modify this
-        Task_sleep(1000000 / Clock_tickPeriod);
-    }
 }
 
 int main(void)
 {
     /*
-     * TODO: Aseta interupt hï¿½ndlerit niin, etteivï¿½t sekoita koodia
-     * eli silloin kuin mahdollisuus mennï¿½ sekaisin - ovat pois pï¿½ï¿½ltï¿½
-     * ja viimeisellï¿½ mahdollisella hetkellï¿½ interrupt handler pï¿½ï¿½lle ja takaisin pois pï¿½ï¿½ltï¿½
-     * katso Lovelace 18. Keskeytykset
+     * TODO: Muuten toimii paitsi uart viestin vastaanotto jäädyttää softan
      */
     // Task variables
-    Task_Handle sensorTaskHandle;
-    Task_Params sensorTaskParams;
     Task_Handle uartTaskHandle;
     Task_Params uartTaskParams;
     Task_Handle mpuTaskHandle;
@@ -355,16 +330,21 @@ int main(void)
     Board_initUART();
 
     // Open the pins
-    // Remember to register the above interrupt handler for button (Check below)
     hMpuPin = PIN_open(&MpuPinState, MpuPinConfig);
     if (!hMpuPin)
     {
         System_abort("Error initializing MPU pins\n");
     }
+    //TODO: Buttonhandle1, toimiiko se oletetusti vaiko miten?
     buttonHandle0 = PIN_open(&buttonState0, buttonConfig0);
     if (!buttonHandle0)
     {
         System_abort("Error initializing Button0 pins\n");
+    }
+    buttonHandle1 = PIN_open(&buttonState1, buttonConfig1);
+    if (!buttonHandle1)
+    {
+        System_abort("Error initializing Button1 pins\n");
     }
     ledHandle0 = PIN_open(&ledState0, ledConfig0);
     if (!ledHandle0)
@@ -383,8 +363,11 @@ int main(void)
         System_abort("Error initializing Buzzer pins\n");
     }
 
-    // Set buttonFxn as interrupt handler for button pin
     if (PIN_registerIntCb(buttonHandle0, &buttonFxn0) != 0)
+    {
+        System_abort("Error registering button callback function");
+    }
+    if (PIN_registerIntCb(buttonHandle1, &buttonFxn1) != 0)
     {
         System_abort("Error registering button callback function");
     }
@@ -398,19 +381,8 @@ int main(void)
     {
         System_abort("MPU Task create failed!");
     }
-    // Task
-    /*
-    Task_Params_init(&sensorTaskParams);
-    sensorTaskParams.stackSize = STACKSIZE;
-    sensorTaskParams.stack = &sensorTaskStack;
-    sensorTaskParams.priority=2;
-    sensorTaskHandle = Task_create(sensorTaskFxn, &sensorTaskParams, NULL);
-    if (sensorTaskHandle == NULL) {
-        System_abort("sensorTask create failed!");
-    }
-    */
+
     // uartTask
-    /*
     Task_Params_init(&uartTaskParams);
     uartTaskParams.stackSize = STACKSIZE;
     uartTaskParams.stack = &uartTaskStack;
@@ -419,7 +391,7 @@ int main(void)
     if (uartTaskHandle == NULL) {
         System_abort("uartTask create failed!");
     }
-    */
+
     /* Sanity check */
     System_printf("Hello world!\n");
     System_flush();

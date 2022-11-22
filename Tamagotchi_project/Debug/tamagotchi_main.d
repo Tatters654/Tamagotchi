@@ -8,6 +8,8 @@ tamagotchi_main.obj: C:/ti/ccs1040/ccs/tools/compiler/ti-cgt-arm_20.2.5.LTS/incl
 tamagotchi_main.obj: C:/ti/ccs1040/ccs/tools/compiler/ti-cgt-arm_20.2.5.LTS/include/sys/_types.h
 tamagotchi_main.obj: C:/ti/ccs1040/ccs/tools/compiler/ti-cgt-arm_20.2.5.LTS/include/sys/cdefs.h
 tamagotchi_main.obj: C:/ti/ccs1040/ccs/tools/compiler/ti-cgt-arm_20.2.5.LTS/include/machine/_types.h
+tamagotchi_main.obj: C:/ti/ccs1040/ccs/tools/compiler/ti-cgt-arm_20.2.5.LTS/include/string.h
+tamagotchi_main.obj: C:/ti/ccs1040/ccs/tools/compiler/ti-cgt-arm_20.2.5.LTS/include/xlocale/_string.h
 tamagotchi_main.obj: C:/ti/xdctools_3_32_01_22_core_win32/xdctools_3_32_01_22_core/packages/xdc/std.h
 tamagotchi_main.obj: C:/ti/ccs1040/ccs/tools/compiler/ti-cgt-arm_20.2.5.LTS/include/stddef.h
 tamagotchi_main.obj: C:/ti/tirtos_cc13xx_cc26xx_2_21_00_06/products/bios_6_46_01_37/packages/ti/targets/arm/elf/std.h
@@ -235,12 +237,11 @@ tamagotchi_main.obj: C:/ti/tirtos_cc13xx_cc26xx_2_21_00_06/products/bios_6_46_01
 tamagotchi_main.obj: C:/ti/tirtos_cc13xx_cc26xx_2_21_00_06/products/tidrivers_cc13xx_cc26xx_2_21_00_04/packages/ti/drivers/UART.h
 tamagotchi_main.obj: ../Board.h
 tamagotchi_main.obj: ../CC2650STK.h
+tamagotchi_main.obj: ../buzzer.h
 tamagotchi_main.obj: ../wireless/comm_lib.h
 tamagotchi_main.obj: F:/University\ of\ Oulu/O_Alkeet_ja_Tietokonejarjestelmat/Tamagotchi/Tamagotchi_project/wireless/CWC_CC2650_154Drv.h
 tamagotchi_main.obj: C:/ti/tirtos_cc13xx_cc26xx_2_21_00_06/products/cc26xxware_2_24_03_17272/driverlib/rf_data_entry.h
 tamagotchi_main.obj: C:/ti/tirtos_cc13xx_cc26xx_2_21_00_06/products/cc26xxware_2_24_03_17272/driverlib/rf_mailbox.h
-tamagotchi_main.obj: C:/ti/ccs1040/ccs/tools/compiler/ti-cgt-arm_20.2.5.LTS/include/string.h
-tamagotchi_main.obj: C:/ti/ccs1040/ccs/tools/compiler/ti-cgt-arm_20.2.5.LTS/include/xlocale/_string.h
 tamagotchi_main.obj: F:/University\ of\ Oulu/O_Alkeet_ja_Tietokonejarjestelmat/Tamagotchi/Tamagotchi_project/wireless/address.h
 tamagotchi_main.obj: ../sensors/opt3001.h
 tamagotchi_main.obj: ../sensors/mpu9250.h
@@ -260,6 +261,10 @@ C:/ti/ccs1040/ccs/tools/compiler/ti-cgt-arm_20.2.5.LTS/include/sys/_types.h:
 C:/ti/ccs1040/ccs/tools/compiler/ti-cgt-arm_20.2.5.LTS/include/sys/cdefs.h:
 
 C:/ti/ccs1040/ccs/tools/compiler/ti-cgt-arm_20.2.5.LTS/include/machine/_types.h:
+
+C:/ti/ccs1040/ccs/tools/compiler/ti-cgt-arm_20.2.5.LTS/include/string.h:
+
+C:/ti/ccs1040/ccs/tools/compiler/ti-cgt-arm_20.2.5.LTS/include/xlocale/_string.h:
 
 C:/ti/xdctools_3_32_01_22_core_win32/xdctools_3_32_01_22_core/packages/xdc/std.h:
 
@@ -715,6 +720,8 @@ C:/ti/tirtos_cc13xx_cc26xx_2_21_00_06/products/tidrivers_cc13xx_cc26xx_2_21_00_0
 
 ../CC2650STK.h:
 
+../buzzer.h:
+
 ../wireless/comm_lib.h:
 
 F:/University\ of\ Oulu/O_Alkeet_ja_Tietokonejarjestelmat/Tamagotchi/Tamagotchi_project/wireless/CWC_CC2650_154Drv.h:
@@ -722,10 +729,6 @@ F:/University\ of\ Oulu/O_Alkeet_ja_Tietokonejarjestelmat/Tamagotchi/Tamagotchi_
 C:/ti/tirtos_cc13xx_cc26xx_2_21_00_06/products/cc26xxware_2_24_03_17272/driverlib/rf_data_entry.h:
 
 C:/ti/tirtos_cc13xx_cc26xx_2_21_00_06/products/cc26xxware_2_24_03_17272/driverlib/rf_mailbox.h:
-
-C:/ti/ccs1040/ccs/tools/compiler/ti-cgt-arm_20.2.5.LTS/include/string.h:
-
-C:/ti/ccs1040/ccs/tools/compiler/ti-cgt-arm_20.2.5.LTS/include/xlocale/_string.h:
 
 F:/University\ of\ Oulu/O_Alkeet_ja_Tietokonejarjestelmat/Tamagotchi/Tamagotchi_project/wireless/address.h:
 

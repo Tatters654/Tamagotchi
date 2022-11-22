@@ -44,8 +44,8 @@ enum state programState = WAITING;
 short uartPet = 0;
 short uartEat = 0;
 short uartExercise = 0;
-char uartInput;
-char uartBuffer[30];
+char uartInput[80];
+char uartBuffer[80];
 // Add pins RTOS-variables and configuration here
 static PIN_Handle buttonHandle0;
 static PIN_State buttonState0;
@@ -119,7 +119,7 @@ void buzzerBuzz()
     // Make the buzzer go buzz!
     buzzerOpen(hBuzzer);
     buzzerSetFrequency(2000);
-    Task_sleep(50000 / Clock_tickPeriod);
+    Task_sleep(500000 / Clock_tickPeriod);
     buzzerClose();
 }
 Void mpuFxn(UArg arg0, UArg arg1)
@@ -181,10 +181,8 @@ Void mpuFxn(UArg arg0, UArg arg1)
 
 static void uartFxn(UART_Handle uart, void *rxBuffer, size_t len)
 {
-    // TODO: Adjust if needed
     // Handler function for incoming UART messages
-    strcpy(uartBuffer, uartInput);
-    printf("uartBuffer: %c", uartBuffer);
+    strcat(uartBuffer, rxBuffer);
     programState = RECV_MSG;
     UART_read(uart, rxBuffer, 1);
 }
@@ -206,24 +204,33 @@ Void uartTaskFxn(UArg arg0, UArg arg1)
     char PET_GONE[] = "Too late";
 
     // UART connection setup as 9600,8n1
-    UART_Params_init(&uartParams);
-    uartParams.writeDataMode = UART_DATA_TEXT;
-    uartParams.readDataMode = UART_DATA_TEXT;
-    uartParams.readEcho = UART_ECHO_OFF;
-    uartParams.readMode = UART_MODE_CALLBACK;
-    uartParams.readCallback = &uartFxn;
-    uartParams.baudRate = 9600;            // nopeus 9600baud
-    uartParams.dataLength = UART_LEN_8;    // 8
-    uartParams.parityType = UART_PAR_NONE; // n
-    uartParams.stopBits = UART_STOP_ONE;   // 1
 
+   UART_Params_init(&uartParams);
+   uartParams.writeDataMode = UART_DATA_TEXT;
+   uartParams.readDataMode = UART_DATA_TEXT;
+   uartParams.readEcho = UART_ECHO_OFF;
+   uartParams.readMode  = UART_MODE_CALLBACK; // Keskeytyspohjainen vastaanotto
+   uartParams.readCallback  = &uartFxn; // Käsittelijäfunktio
+   uartParams.baudRate = 9600; // nopeus 9600baud
+   uartParams.dataLength = UART_LEN_8; // 8
+   uartParams.parityType = UART_PAR_NONE; // n
+   uartParams.stopBits = UART_STOP_ONE; // 1
+/*
+    //UART connection
+    UART_Params_init(&uartParams);
+    uartParams.baudRate      = 9600;
+    uartParams.readMode      = UART_MODE_CALLBACK; // Keskeytyspohjainen vastaanotto
+    uartParams.readCallback  = &uartFxn; // Käsittelijäfunktio
+    uartParams.readDataMode  = UART_DATA_TEXT;
+    uartParams.writeDataMode = UART_DATA_TEXT;
+*/
     // Open UART Connection
     uart = UART_open(Board_UART0, &uartParams);
     if (uart == NULL)
     {
         System_abort("Error opening the UART");
     }
-    UART_read(uart, &uartInput, 1);
+    UART_read(uart, uartInput, 1);
     while (1)
     {
         //UART Read/Write loop
@@ -257,8 +264,6 @@ Void uartTaskFxn(UArg arg0, UArg arg1)
                 {
                     ledBlink(1);
                     buzzerBuzz();
-                    buzzerBuzz();
-                    buzzerBuzz();
                 }
                 if (strstr(uartBuffer, NEED_EXERCISE) != NULL)
                 {
@@ -270,7 +275,6 @@ Void uartTaskFxn(UArg arg0, UArg arg1)
                 if (strstr(uartBuffer, NEED_PET) != NULL)
                 {
                     ledBlink(1);
-                    buzzerBuzz();
                     buzzerBuzz();
                     buzzerBuzz();
                 }
@@ -295,15 +299,22 @@ Void uartTaskFxn(UArg arg0, UArg arg1)
         if (programState == MSG_READY)
         {
             // Send sensor data string with UART
+            uartMsg[0] = '\0';
             sprintf(uartMsg, "id:1111,EAT:%d,PET:%d,EXERCISE:%d\0", uartEat, uartPet, uartExercise);
-            UART_write(uart, uartMsg, strlen(uartMsg));
+            printf("uartMsg: %s\n", uartMsg);
+            size_t uartLen = strlen(uartMsg) + 1;
+            UART_write(uart, uartMsg, uartLen);
             uartEat = 0;
             uartPet = 0;
             uartExercise = 0;
+            uartMsg[0] = '\0';
             programState = WAITING;
+
+
+
         }
         // Once per 100ms, you can modify this
-        Task_sleep(100000 / Clock_tickPeriod);
+        Task_sleep(1000000 / Clock_tickPeriod);
     }
 
 }

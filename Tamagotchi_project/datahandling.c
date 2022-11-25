@@ -1,15 +1,13 @@
 //
 // Created by jeret on 16/11/2022.
 //
-#include <stdio.h>
 #include "math.h"
-#include "stdlib.h"
+#include "stdio.h"
 
-double movingaverage(double time, double acc_x, double acc_y, double acc_z);
-double total_moved(double moving_average_acc_x,
-                   double moving_average_acc_y,
-                   double moving_average_acc_z);
+void moving_average(double time, double acc_x, double acc_y, double acc_z);
 
+//  muokkaa [16] kohtaa jos halutaan lisää rivejä. Huom myös data_array_length, jota tulee nostaa saman arvoiseksi rivillä 41.
+//  aika, acc_x, acc_y, acc_z
 double data[16][7] = {
         {0,  0.01,  0.03, -0.98, 1.06,  0.37,  0.18},
         {1,  0.01,  0.03, -0.97, 1.40,  0.39,  0.48},
@@ -29,7 +27,6 @@ double data[16][7] = {
         {15, -0.00, 0.03, 7, 1.93,  -1.07, -0.95,}
 };
 
-//aika, acc_x, acc_y, acc_z, gyro_x, gyro_y, gyro_z
 double totaltime;
 double total_acc_x;
 double total_acc_y;
@@ -38,32 +35,34 @@ double moving_average_acc_x;
 double moving_average_acc_y;
 double moving_average_acc_z;
 double totalmoved;
-double threshold = 1;
+double threshold = 1; //maaginen konstantti sille thresholdille, että onko laite liikeessä
 
 int main(){
-    int i; // viimeisen datan indeksi
-    int data_window; // data ikkuna ts. montako datapistettä lasketaan taaksepäin
-    int last_index = abs(last_data_index - data_window); // laskee viimeisen data pisteen indeksin, jos se on scrollaantunut pois
-    for (i = i, i <= last_index, i++) {
-        movingaverage(data[i][0], data[i][1], data[i][2], data[i][3]);
+    int i;
+    int data_array_length = 15; // maaginen konstantti, tähän taulukon listojen määrä
+    for (i = 0; i <= data_array_length; i++) {
+        //  aika, acc_x, acc_y, acc_z
+        moving_average(data[i][0], data[i][1], data[i][2], data[i][3]);
     }
-    //printf("%f %f %f %f %f\n", time, totaltime, moving_average_acc_x, moving_average_acc_y, moving_average_acc_z);
+    printf("%s %f \n", "Liikkeen keskiarvokiihtyvyys:", totalmoved);
     if (totalmoved > threshold) {
-        return 1; // Liikkuu, voi vaihtaa ENUM:iksi jos halaa
+        printf("%s\n", "liikkuu");
+        return 1; // Liikkuu
     }
     else {
+        printf("%s\n", "ei liiku");
         return 0; // Ei liiku
+
     }
 }
 
-double movingaverage(double time, double acc_x, double acc_y, double acc_z) {
+void moving_average(double time, double acc_x, double acc_y, double acc_z) {
     totaltime += time;
-    total_acc_x += fabs(acc_x);
+    total_acc_x += fabs(acc_x); //float absolute value
     total_acc_y += fabs(acc_y);
     total_acc_z += fabs(acc_z);
     moving_average_acc_x = total_acc_x / totaltime;
     moving_average_acc_y = total_acc_y / totaltime;
     moving_average_acc_z = total_acc_z / totaltime;
     totalmoved = moving_average_acc_x + moving_average_acc_y + moving_average_acc_z;
-
 }

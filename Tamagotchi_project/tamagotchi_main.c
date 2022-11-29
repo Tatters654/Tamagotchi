@@ -5,7 +5,7 @@
     -Any kind of continous movement with enough force (so that the Accelerometer values increase by at least a certain value)
      will count as exercise (Increases EXERCISE value by 1)
 
-     **modify EXERCISE_THRESHOLD value on line 81 to adjust the movement required for Exercise value to increase -----------(MAY BE REQUIRED WHEN CODE IS LOADED TO A NEW SENSORTAG)----------
+     **modify EXERCISE_THRESHOLD value on line 83 to adjust the movement required for Exercise value to increase -----------(MAY BE REQUIRED WHEN CODE IS LOADED TO A NEW SENSORTAG)----------
 
    When Sensortag receives a message from the backend, it flashes a led and makes a sound depending on the message the backend sent:
        Tamagotchi is well fed and doesn't want to be fed anymore: *Beeps once and green LED flashes*
@@ -80,7 +80,7 @@ char uartBuffer[400];
 //Make sure TAG_ID matches the ID on web application
 char TAG_ID[] = "1111";
 //The movement threshold required to increase Exercise value
-double EXERCISE_THRESHOLD = 25.00;
+double EXERCISE_THRESHOLD = 28.00;
 //Variables for buzzer notes
 #define NOTE_C4 262
 #define NOTE_E4 330
@@ -130,13 +130,13 @@ static const I2CCC26XX_I2CPinCfg i2cMPUCfg = {
 
 void buttonFxn0(PIN_Handle handle, PIN_Id pinId)
 {
-    // Increase the uartEat value by 3 (i.e. Feed the pet)
+    // Increase the uartEat value by 1 (i.e. Feed the pet)
     uartEat += 1;
     programState = MSG_READY;
 }
 void buttonFxn1(PIN_Handle handle, PIN_Id pinId)
 {
-    // Increase the uartPet value by 3 (i.e. Pet the pet)
+    // Increase the uartPet value by 1 (i.e. Pet the pet)
     uartPet += 1;
     programState = MSG_READY;
 }
@@ -376,8 +376,8 @@ Void mpuFxn(UArg arg0, UArg arg1)
             // Close MPU I2C
             //I2C_close(i2cMPU);
         }
-        // Sleep 1000ms
-        Task_sleep(1000000 / Clock_tickPeriod);
+        // Sleep 100ms
+        Task_sleep(100000 / Clock_tickPeriod);
     }
 }
 
@@ -446,10 +446,10 @@ Void uartTaskFxn(UArg arg0, UArg arg1)
                 {
                     ledBlink(0);
                     buzzerBuzz();
-                    //10ms
+                    //100ms
                     Task_sleep(100000 / Clock_tickPeriod);
                     buzzerBuzz();
-                    //10ms
+                    //100ms
                     Task_sleep(100000 / Clock_tickPeriod);
                     buzzerBuzz();
                 }
@@ -457,7 +457,7 @@ Void uartTaskFxn(UArg arg0, UArg arg1)
                 {
                     ledBlink(0);
                     buzzerBuzz();
-                    //10ms
+                    //100ms
                     Task_sleep(100000 / Clock_tickPeriod);
                     buzzerBuzz();
                 }
@@ -470,10 +470,10 @@ Void uartTaskFxn(UArg arg0, UArg arg1)
                 {
                     ledBlink(1);
                     buzzerBuzz();
-                    //10ms
+                    //100ms
                     Task_sleep(100000 / Clock_tickPeriod);
                     buzzerBuzz();
-                    //10ms
+                    //100ms
                     Task_sleep(100000 / Clock_tickPeriod);
                     buzzerBuzz();
                 }
@@ -481,7 +481,7 @@ Void uartTaskFxn(UArg arg0, UArg arg1)
                 {
                     ledBlink(1);
                     buzzerBuzz();
-                    //10ms
+                    //100ms
                     Task_sleep(100000 / Clock_tickPeriod);
                     buzzerBuzz();
                 }
@@ -518,7 +518,7 @@ Void uartTaskFxn(UArg arg0, UArg arg1)
 
 
         }
-        // Once per 100ms, you can modify this
+        // Once per 1000ms, you can modify this
         Task_sleep(1000000 / Clock_tickPeriod);
     }
 

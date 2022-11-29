@@ -1,6 +1,35 @@
+/*
+ TAMAGOTCHI FUNCTIONS:
+    -Press button 1 on the Sensortag to Feed Tamagotchi (Increases EAT value by 1)
+    -Press the other button on Sensortag to Pet the Tamagotchi (Increases PET value by 1)
+    -Any kind of continous movement with enough force (so that the Accelerometer values increase by at least a certain value)
+     will count as exercise (Increases EXERCISE value by 1)
+
+     **modify EXERCISE_THRESHOLD value on line 80 to adjust the movement required for Exercise value to increase -----------(MAY BE REQUIRED WHEN CODE IS LOADED TO A NEW SENSORTAG)----------
+
+   When Sensortag receives a message from the backend, it flashes a led and makes a sound depending on the message the backend sent:
+       Tamagotchi is well fed and doesn't want to be fed anymore: *Beeps once and green LED flashes*
+       Tamagotchi wants to be fed: *Beeps once and red LED flashes*
+       Tamagotchi doesn't want the owner to pet it: *Beeps twice and green LED flashes*
+       Tamagotchi wants the owner to pet it: *Beeps twice and red LED flashes*
+       Tamagotchi doesn't want to exercise: *Beeps thrice and green LED flashes*
+       Tamagotchi wants to exercise: *Beeps thrice and red LED flashes*
+
+
+       If Tamagotchi runs away, the Sensortag plays a short farewell song and flashes the red LED
+
+
+
+
+Creators: Mikko Lempinen, Jere Tapsa & Nanna Setämaa
+    Kaikki osallistuivat suunnitteluun, Jere vastasi datan käsittelystä, Nanna avusti aina tarvittaessa ja Mikko paketoi kokonaisuuden
+
+*/
 /* C Standard library */
 #include <stdio.h>
+#include <stdint.h>
 #include <string.h>
+#include <math.h>
 
 /* XDCtools files */
 #include <xdc/std.h>
@@ -44,8 +73,20 @@ enum state programState = WAITING;
 short uartPet = 0;
 short uartEat = 0;
 short uartExercise = 0;
-char uartInput[80];
-char uartBuffer[80];
+char uartInput[400];
+char uartBuffer[400];
+//Make sure TAG_ID matches the ID on web application
+char TAG_ID[] = "1111";
+//The movement threshold required to increase Exercise value
+double EXERCISE_THRESHOLD = 25.00;
+//Variables for buzzer notes
+#define NOTE_C4 262
+#define NOTE_E4 330
+#define NOTE_G4 392
+#define NOTE_A3 220
+#define NOTE_G3 196
+#define NOTE_B3 247
+#define NOTE_D4 294
 // Add pins RTOS-variables and configuration here
 static PIN_Handle buttonHandle0;
 static PIN_State buttonState0;
@@ -88,27 +129,43 @@ static const I2CCC26XX_I2CPinCfg i2cMPUCfg = {
 void buttonFxn0(PIN_Handle handle, PIN_Id pinId)
 {
     // Increase the uartEat value by 3 (i.e. Feed the pet)
-    uartEat += 3;
+    uartEat += 1;
     programState = MSG_READY;
 }
 void buttonFxn1(PIN_Handle handle, PIN_Id pinId)
 {
     // Increase the uartPet value by 3 (i.e. Pet the pet)
-    uartPet += 3;
+    uartPet += 1;
     programState = MSG_READY;
 }
 void ledBlink(int color)
 {
-    // Blinks LEDs. Give the function value 1 or 2 depending on which led you want to blink
+    // Blinks LEDs. Give the function value 0 or 1 depending on which led you want to blink
     //  0 = Green and 1 = RED
     if (color == 0)
     {
         PIN_setOutputValue(ledHandle0, Board_LED0, 1);
         Task_sleep(50000 / Clock_tickPeriod);
         PIN_setOutputValue(ledHandle0, Board_LED0, 0);
+        Task_sleep(50000 / Clock_tickPeriod);
+        PIN_setOutputValue(ledHandle0, Board_LED0, 1);
+        Task_sleep(50000 / Clock_tickPeriod);
+        PIN_setOutputValue(ledHandle0, Board_LED0, 0);
+        Task_sleep(50000 / Clock_tickPeriod);
+        PIN_setOutputValue(ledHandle0, Board_LED0, 1);
+        Task_sleep(50000 / Clock_tickPeriod);
+        PIN_setOutputValue(ledHandle0, Board_LED0, 0);
     }
     if (color == 1)
     {
+        PIN_setOutputValue(ledHandle1, Board_LED1, 1);
+        Task_sleep(50000 / Clock_tickPeriod);
+        PIN_setOutputValue(ledHandle1, Board_LED1, 0);
+        Task_sleep(50000 / Clock_tickPeriod);
+        PIN_setOutputValue(ledHandle1, Board_LED1, 1);
+        Task_sleep(50000 / Clock_tickPeriod);
+        PIN_setOutputValue(ledHandle1, Board_LED1, 0);
+        Task_sleep(50000 / Clock_tickPeriod);
         PIN_setOutputValue(ledHandle1, Board_LED1, 1);
         Task_sleep(50000 / Clock_tickPeriod);
         PIN_setOutputValue(ledHandle1, Board_LED1, 0);
@@ -122,9 +179,71 @@ void buzzerBuzz()
     Task_sleep(500000 / Clock_tickPeriod);
     buzzerClose();
 }
+void buzzerSong1()
+{
+    // Play a song using the buzzer
+    buzzerOpen(hBuzzer);
+    buzzerSetFrequency(NOTE_C4);
+    Task_sleep(375000 / Clock_tickPeriod);
+    buzzerSetFrequency(NOTE_E4);
+    Task_sleep(375000 / Clock_tickPeriod);
+    buzzerSetFrequency(NOTE_G4);
+    Task_sleep(375000 / Clock_tickPeriod);
+    buzzerSetFrequency(NOTE_E4);
+    Task_sleep(375000 / Clock_tickPeriod);
+    buzzerSetFrequency(NOTE_C4);
+    Task_sleep(375000 / Clock_tickPeriod);
+    buzzerSetFrequency(NOTE_E4);
+    Task_sleep(375000/2 / Clock_tickPeriod);
+    buzzerSetFrequency(NOTE_G4);
+    Task_sleep(562500 / Clock_tickPeriod);
+    buzzerSetFrequency(NOTE_E4);
+    Task_sleep(375000 / Clock_tickPeriod);
+    buzzerSetFrequency(NOTE_A3);
+    Task_sleep(375000 / Clock_tickPeriod);
+    buzzerSetFrequency(NOTE_C4);
+    Task_sleep(375000 / Clock_tickPeriod);
+    buzzerSetFrequency(NOTE_E4);
+    Task_sleep(375000 / Clock_tickPeriod);
+    buzzerSetFrequency(NOTE_C4);
+    Task_sleep(375000 / Clock_tickPeriod);
+    buzzerSetFrequency(NOTE_A3);
+    Task_sleep(375000 / Clock_tickPeriod);
+    buzzerSetFrequency(NOTE_C4);
+    Task_sleep(375000/2 / Clock_tickPeriod);
+    buzzerSetFrequency(NOTE_E4);
+    Task_sleep(562500 / Clock_tickPeriod);
+    buzzerSetFrequency(NOTE_C4);
+    Task_sleep(375000 / Clock_tickPeriod);
+    buzzerSetFrequency(NOTE_G3);
+    Task_sleep(375000 / Clock_tickPeriod);
+    buzzerSetFrequency(NOTE_B3);
+    Task_sleep(375000 / Clock_tickPeriod);
+    buzzerSetFrequency(NOTE_D4);
+    Task_sleep(375000 / Clock_tickPeriod);
+    buzzerSetFrequency(NOTE_B3);
+    Task_sleep(375000 / Clock_tickPeriod);
+    buzzerSetFrequency(NOTE_G3);
+    Task_sleep(375000 / Clock_tickPeriod);
+    buzzerSetFrequency(NOTE_B3);
+    Task_sleep(375000/2 / Clock_tickPeriod);
+    buzzerSetFrequency(NOTE_D4);
+    Task_sleep(562500 / Clock_tickPeriod);
+    buzzerSetFrequency(NOTE_B3);
+    Task_sleep(375000 / Clock_tickPeriod);
+    buzzerClose();
+}
+
 Void mpuFxn(UArg arg0, UArg arg1)
 {
+    double dataArray[8][6];
     float ax, ay, az, gx, gy, gz;
+    double aX, aY, aZ, gX, gY, gZ;
+    int counter = 0;
+    double totalMoved = 0.00;
+    double totalAx = 0.00;
+    double totalAy = 0.00;
+    double totalAz = 0.00;
     I2C_Handle i2cMPU;
     I2C_Params i2cMPUParams;
 
@@ -146,35 +265,121 @@ Void mpuFxn(UArg arg0, UArg arg1)
     // Setup MPU-sensor
     mpu9250_setup(&i2cMPU);
     // Close MPU I2C
-    I2C_close(i2cMPU);
-    // TEST EXERCISE:
-    int counter = 0;
-
+    //I2C_close(i2cMPU);
     while (1)
     {
         // Open MPU I2C
         if (programState == WAITING)
         {
-            i2cMPU = I2C_open(Board_I2C, &i2cMPUParams);
-            if (i2cMPU == NULL)
-            {
-                System_abort("Error Initializing I2CMPU\n");
-            }
-            // Get MPU data and print it to debugger
+            //i2cMPU = I2C_open(Board_I2C, &i2cMPUParams);
+            //if (i2cMPU == NULL)
+            //{
+            //    System_abort("Error Initializing I2CMPU\n");
+            //}
+            // Get MPU data
             mpu9250_get_data(&i2cMPU, &ax, &ay, &az, &gx, &gy, &gz);
-            printf("MPU DATA: ax = %.2f, ay = %.2f, az = %.2f, gx = %.2f, gy = %.2f, gz = %.2f  \n", ax, ay, az, gx, gy, gz);
-            // TEST EXERCISE:
-            counter++;
-            if (counter > 10)
+            aX = (double)ax;
+            aY = (double)ay;
+            aZ = (double)az;
+            gX = (double)gx;
+            gY = (double)gy;
+            gZ = (double)gz;
+            if(counter == 0)
             {
-                uartExercise += 3;
-                programState = MSG_READY;
+                dataArray[0][0] = aX;
+                dataArray[0][1] = aY;
+                dataArray[0][2] = aZ;
+                dataArray[0][3] = gX;
+                dataArray[0][4] = gY;
+                dataArray[0][5] = gZ;
+            }
+            if(counter == 1)
+            {
+                dataArray[1][0] = aX;
+                dataArray[1][1] = aY;
+                dataArray[1][2] = aZ;
+                dataArray[1][3] = gX;
+                dataArray[1][4] = gY;
+                dataArray[1][5] = gZ;
+            }
+            if(counter == 2)
+            {
+                dataArray[2][0] = aX;
+                dataArray[2][1] = aY;
+                dataArray[2][2] = aZ;
+                dataArray[2][3] = gX;
+                dataArray[2][4] = gY;
+                dataArray[2][5] = gZ;
+            }
+            if(counter == 3)
+            {
+                dataArray[3][0] = aX;
+                dataArray[3][1] = aY;
+                dataArray[3][2] = aZ;
+                dataArray[3][3] = gX;
+                dataArray[3][4] = gY;
+                dataArray[3][5] = gZ;
+            }
+            if(counter == 4)
+            {
+                dataArray[4][0] = aX;
+                dataArray[4][1] = aY;
+                dataArray[4][2] = aZ;
+                dataArray[4][3] = gX;
+                dataArray[4][4] = gY;
+                dataArray[4][5] = gZ;
+            }
+            if(counter == 5)
+            {
+                dataArray[5][0] = aX;
+                dataArray[5][1] = aY;
+                dataArray[5][2] = aZ;
+                dataArray[5][3] = gX;
+                dataArray[5][4] = gY;
+                dataArray[5][5] = gZ;
+            }
+            if(counter == 6)
+            {
+                dataArray[6][0] = aX;
+                dataArray[6][1] = aY;
+                dataArray[6][2] = aZ;
+                dataArray[6][3] = gX;
+                dataArray[6][4] = gY;
+                dataArray[6][5] = gZ;
+            }
+            if(counter == 7)
+            {
+                dataArray[7][0] = aX;
+                dataArray[7][1] = aY;
+                dataArray[7][2] = aZ;
+                dataArray[7][3] = gX;
+                dataArray[7][4] = gY;
+                dataArray[7][5] = gZ;
+            }
+            counter++;
+            if (dataArray[7][5] != NULL)
+            {
+                totalAx = fabs(dataArray[0][0]) + fabs(dataArray[1][0]) + fabs(dataArray[2][0]) + fabs(dataArray[3][0]) + fabs(dataArray[4][0]) + fabs(dataArray[5][0]) + fabs(dataArray[6][0]) + fabs(dataArray[7][0]);
+                totalAy = fabs(dataArray[0][1]) + fabs(dataArray[1][1]) + fabs(dataArray[2][1]) + fabs(dataArray[3][1]) + fabs(dataArray[4][1]) + fabs(dataArray[5][1]) + fabs(dataArray[6][1]) + fabs(dataArray[7][1]);
+                totalAz = fabs(dataArray[0][2]) + fabs(dataArray[1][2]) + fabs(dataArray[2][2]) + fabs(dataArray[3][2]) + fabs(dataArray[4][2]) + fabs(dataArray[5][2]) + fabs(dataArray[6][2]) + fabs(dataArray[7][2]);
+                totalMoved = totalAx + totalAy + totalAz;
+                if(totalMoved > EXERCISE_THRESHOLD)
+                {
+                    uartExercise += 1;
+                    programState = MSG_READY;
+                }
+            }
+            //Observe the MPU Sensor values if needed:
+            //printf("MPU DATA: ax = %.2f, ay = %.2f, az = %.2f, gx = %.2f, gy = %.2f, gz = %.2f  \n", ax, ay, az, gx, gy, gz);
+
+            if (counter > 7)
+            {
                 counter = 0;
             }
             // Close MPU I2C
-            I2C_close(i2cMPU);
+            //I2C_close(i2cMPU);
         }
-        // Sleep 100ms
+        // Sleep 1000ms
         Task_sleep(1000000 / Clock_tickPeriod);
     }
 }
@@ -184,7 +389,12 @@ static void uartFxn(UART_Handle uart, void *rxBuffer, size_t len)
     // Handler function for incoming UART messages
     strcat(uartBuffer, rxBuffer);
     programState = RECV_MSG;
-    UART_read(uart, rxBuffer, 1);
+    if (uartBuffer[0] != TAG_ID[0])
+    {
+        uartBuffer[0] = '\0';
+        UART_readCancel(uart);
+    }
+    UART_read(uart, uartInput, 1);
 }
 
 /* Task Functions */
@@ -193,8 +403,7 @@ Void uartTaskFxn(UArg arg0, UArg arg1)
     UART_Handle uart;
     UART_Params uartParams;
     char uartMsg[30];
-    //Make sure TAG_ID matches the ID legged in on web application
-    char TAG_ID[] = "1111";
+
     char NO_EAT[] = "Calm down";
     char NO_EXERCISE[] = "Too fitness";
     char NO_PET[] = "Feels good";
@@ -204,7 +413,6 @@ Void uartTaskFxn(UArg arg0, UArg arg1)
     char PET_GONE[] = "Too late";
 
     // UART connection setup as 9600,8n1
-
    UART_Params_init(&uartParams);
    uartParams.writeDataMode = UART_DATA_TEXT;
    uartParams.readDataMode = UART_DATA_TEXT;
@@ -215,15 +423,7 @@ Void uartTaskFxn(UArg arg0, UArg arg1)
    uartParams.dataLength = UART_LEN_8; // 8
    uartParams.parityType = UART_PAR_NONE; // n
    uartParams.stopBits = UART_STOP_ONE; // 1
-/*
-    //UART connection
-    UART_Params_init(&uartParams);
-    uartParams.baudRate      = 9600;
-    uartParams.readMode      = UART_MODE_CALLBACK; // Keskeytyspohjainen vastaanotto
-    uartParams.readCallback  = &uartFxn; // Käsittelijäfunktio
-    uartParams.readDataMode  = UART_DATA_TEXT;
-    uartParams.writeDataMode = UART_DATA_TEXT;
-*/
+
     // Open UART Connection
     uart = UART_open(Board_UART0, &uartParams);
     if (uart == NULL)
@@ -237,9 +437,10 @@ Void uartTaskFxn(UArg arg0, UArg arg1)
         if (programState == RECV_MSG)
         {
             //Disable button interruptions
-            PIN_setInterrupt(buttonConfig0, PIN_ID(Board_KEY_LEFT) | PIN_IRQ_DIS);
-            PIN_setInterrupt(buttonConfig1, PIN_ID(Board_KEY_RIGHT) | PIN_IRQ_DIS);
+            //PIN_setInterrupt(buttonConfig0, PIN_ID(Board_KEY_LEFT) | PIN_IRQ_DIS);
+            //PIN_setInterrupt(buttonConfig1, PIN_ID(Board_KEY_RIGHT) | PIN_IRQ_DIS);
             // Read the input data and beep+blink led accordingly
+            UART_close(uart);
             if (strstr(uartBuffer, TAG_ID) != NULL)
             {
                 if (strstr(uartBuffer, NO_EAT) != NULL)
@@ -251,13 +452,19 @@ Void uartTaskFxn(UArg arg0, UArg arg1)
                 {
                     ledBlink(0);
                     buzzerBuzz();
+                    //10ms
+                    Task_sleep(100000 / Clock_tickPeriod);
                     buzzerBuzz();
+                    //10ms
+                    Task_sleep(100000 / Clock_tickPeriod);
                     buzzerBuzz();
                 }
                 if (strstr(uartBuffer, NO_PET) != NULL)
                 {
                     ledBlink(0);
                     buzzerBuzz();
+                    //10ms
+                    Task_sleep(100000 / Clock_tickPeriod);
                     buzzerBuzz();
                 }
                 if (strstr(uartBuffer, NEED_EAT) != NULL)
@@ -269,18 +476,24 @@ Void uartTaskFxn(UArg arg0, UArg arg1)
                 {
                     ledBlink(1);
                     buzzerBuzz();
+                    //10ms
+                    Task_sleep(100000 / Clock_tickPeriod);
                     buzzerBuzz();
+                    //10ms
+                    Task_sleep(100000 / Clock_tickPeriod);
                     buzzerBuzz();
                 }
                 if (strstr(uartBuffer, NEED_PET) != NULL)
                 {
                     ledBlink(1);
                     buzzerBuzz();
+                    //10ms
+                    Task_sleep(100000 / Clock_tickPeriod);
                     buzzerBuzz();
                 }
                 if (strstr(uartBuffer, PET_GONE) != NULL)
                 {
-
+                    buzzerSong1();
                     ledBlink(1);
                     ledBlink(1);
                     ledBlink(1);
@@ -292,16 +505,17 @@ Void uartTaskFxn(UArg arg0, UArg arg1)
             }
             uartBuffer[0] = '\0';
             programState = WAITING;
+            uart = UART_open(Board_UART0, &uartParams);
+            UART_read(uart, uartInput, 1);
             //Allow button interruptions
-            PIN_setInterrupt(buttonConfig0, PIN_ID(Board_KEY_LEFT) | PIN_IRQ_POSEDGE);
-            PIN_setInterrupt(buttonConfig1, PIN_ID(Board_KEY_RIGHT) | PIN_IRQ_POSEDGE);
+            //PIN_setInterrupt(buttonConfig0, PIN_ID(Board_KEY_LEFT) | PIN_IRQ_POSEDGE);
+            //PIN_setInterrupt(buttonConfig1, PIN_ID(Board_KEY_RIGHT) | PIN_IRQ_POSEDGE);
         }
         if (programState == MSG_READY)
         {
             // Send sensor data string with UART
             uartMsg[0] = '\0';
             sprintf(uartMsg, "id:1111,EAT:%d,PET:%d,EXERCISE:%d\0", uartEat, uartPet, uartExercise);
-            printf("uartMsg: %s\n", uartMsg);
             size_t uartLen = strlen(uartMsg) + 1;
             UART_write(uart, uartMsg, uartLen);
             uartEat = 0;
@@ -313,7 +527,7 @@ Void uartTaskFxn(UArg arg0, UArg arg1)
 
 
         }
-        // Once per 100ms, you can modify this
+        // Once per 1000ms, you can modify this
         Task_sleep(1000000 / Clock_tickPeriod);
     }
 
@@ -321,9 +535,6 @@ Void uartTaskFxn(UArg arg0, UArg arg1)
 
 int main(void)
 {
-    /*
-     * TODO: Extras + Exercise fxn
-     */
     // Task variables
     Task_Handle uartTaskHandle;
     Task_Params uartTaskParams;
@@ -408,6 +619,5 @@ int main(void)
 
     /* Start BIOS */
     BIOS_start();
-
     return (0);
 }

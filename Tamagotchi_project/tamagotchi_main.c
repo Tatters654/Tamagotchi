@@ -5,13 +5,15 @@
     -Any kind of continous movement with enough force (so that the Accelerometer values increase by at least a certain value)
      will count as exercise (Increases EXERCISE value by 1)
 
-     **modify EXERCISE_THRESHOLD value on line 80 to adjust the movement required for Exercise value to increase -----------(MAY BE REQUIRED WHEN CODE IS LOADED TO A NEW SENSORTAG)----------
+     **modify EXERCISE_THRESHOLD value on line 81 to adjust the movement required for Exercise value to increase -----------(MAY BE REQUIRED WHEN CODE IS LOADED TO A NEW SENSORTAG)----------
 
    When Sensortag receives a message from the backend, it flashes a led and makes a sound depending on the message the backend sent:
        Tamagotchi is well fed and doesn't want to be fed anymore: *Beeps once and green LED flashes*
        Tamagotchi wants to be fed: *Beeps once and red LED flashes*
+
        Tamagotchi doesn't want the owner to pet it: *Beeps twice and green LED flashes*
        Tamagotchi wants the owner to pet it: *Beeps twice and red LED flashes*
+
        Tamagotchi doesn't want to exercise: *Beeps thrice and green LED flashes*
        Tamagotchi wants to exercise: *Beeps thrice and red LED flashes*
 
@@ -22,7 +24,7 @@
 
 
 Creators: Mikko Lempinen, Jere Tapsa & Nanna Setämaa
-    Kaikki osallistuivat suunnitteluun, Jere vastasi datan käsittelystä, Nanna avusti aina tarvittaessa ja Mikko paketoi kokonaisuuden
+    Everyone took part in project planning, Jere was in charge of data handling, Nanna helped with whatever was needed and Mikko made sure the project got done
 
 */
 /* C Standard library */
@@ -271,11 +273,6 @@ Void mpuFxn(UArg arg0, UArg arg1)
         // Open MPU I2C
         if (programState == WAITING)
         {
-            //i2cMPU = I2C_open(Board_I2C, &i2cMPUParams);
-            //if (i2cMPU == NULL)
-            //{
-            //    System_abort("Error Initializing I2CMPU\n");
-            //}
             // Get MPU data
             mpu9250_get_data(&i2cMPU, &ax, &ay, &az, &gx, &gy, &gz);
             aX = (double)ax;
@@ -436,9 +433,6 @@ Void uartTaskFxn(UArg arg0, UArg arg1)
         //UART Read/Write loop
         if (programState == RECV_MSG)
         {
-            //Disable button interruptions
-            //PIN_setInterrupt(buttonConfig0, PIN_ID(Board_KEY_LEFT) | PIN_IRQ_DIS);
-            //PIN_setInterrupt(buttonConfig1, PIN_ID(Board_KEY_RIGHT) | PIN_IRQ_DIS);
             // Read the input data and beep+blink led accordingly
             UART_close(uart);
             if (strstr(uartBuffer, TAG_ID) != NULL)
@@ -507,9 +501,6 @@ Void uartTaskFxn(UArg arg0, UArg arg1)
             programState = WAITING;
             uart = UART_open(Board_UART0, &uartParams);
             UART_read(uart, uartInput, 1);
-            //Allow button interruptions
-            //PIN_setInterrupt(buttonConfig0, PIN_ID(Board_KEY_LEFT) | PIN_IRQ_POSEDGE);
-            //PIN_setInterrupt(buttonConfig1, PIN_ID(Board_KEY_RIGHT) | PIN_IRQ_POSEDGE);
         }
         if (programState == MSG_READY)
         {
@@ -527,7 +518,7 @@ Void uartTaskFxn(UArg arg0, UArg arg1)
 
 
         }
-        // Once per 1000ms, you can modify this
+        // Once per 100ms, you can modify this
         Task_sleep(1000000 / Clock_tickPeriod);
     }
 

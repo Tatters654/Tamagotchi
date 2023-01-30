@@ -23,8 +23,8 @@
 
 
 
-Creators: Mikko Lempinen, Jere Tapsa & Nanna Setämaa
-    Everyone took part in project planning, Jere was in charge of data handling, Nanna helped with whatever was needed and Mikko made sure the project got done
+Creators: Mikko L, Tatters654 & Nanna S
+    Everyone took part in project planning, Tatters654 was in charge of data handling, Nanna helped with whatever was needed and Mikko made sure the project got done
 
 */
 /* C Standard library */
@@ -415,7 +415,7 @@ Void uartTaskFxn(UArg arg0, UArg arg1)
    uartParams.readDataMode = UART_DATA_TEXT;
    uartParams.readEcho = UART_ECHO_OFF;
    uartParams.readMode  = UART_MODE_CALLBACK; // Keskeytyspohjainen vastaanotto
-   uartParams.readCallback  = &uartFxn; // Käsittelijäfunktio
+   uartParams.readCallback  = &uartFxn; // Kï¿½sittelijï¿½funktio
    uartParams.baudRate = 9600; // nopeus 9600baud
    uartParams.dataLength = UART_LEN_8; // 8
    uartParams.parityType = UART_PAR_NONE; // n
